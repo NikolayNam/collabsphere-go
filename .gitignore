@@ -4,6 +4,8 @@
 
 # Secrets files
 deploy/secrets/*
+secrets/*
+secrets/
 
 # Binaries for programs and plugins
 *.exe
