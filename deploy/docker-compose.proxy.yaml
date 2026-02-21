@@ -1,0 +1,29 @@
+services:
+  proxy-caddy:
+    profiles: ["api.local", "api.cloud"]
+    image: proxy-caddy:latest
+    restart: unless-stopped
+    build:
+      context: ../../../OneDrive/Документы/GitHub/collabsphere/proxy/caddy
+    env_file:
+      - .env
+    ports:
+      - 80:80
+      - "443:443/tcp"
+      - "443:443/udp"
+    networks:
+      - platform.web.network
+      - platform.internal.network
+    volumes:
+      - ../proxy/caddy/Caddyfile.local:/etc/caddy/Caddyfile.local:ro
+      - ../proxy/caddy/Caddyfile.prod:/etc/caddy/Caddyfile.prod:ro
+      - ../proxy/caddy/ssl:/etc/caddy/ssl:ro
+
+networks:
+  platform.internal.network:
+    name: platform.internal.network
+    driver: bridge
+    external: false
+  platform.web.network:
+    name: platform.web.network
+    external: true

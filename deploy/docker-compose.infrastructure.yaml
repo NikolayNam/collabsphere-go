@@ -1,0 +1,49 @@
+services:
+  infrastructure-postgres:
+    profiles: [ "api.local" ]
+    image: postgres:18.2-bookworm
+    restart: unless-stopped
+    hostname: "${POSTGRES_HOST}"
+    networks:
+      - platform.internal.network
+    env_file:
+      - .env
+    secrets:
+      - postgres_dev_password
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "-u",
+          "${POSTGRES_USER}",
+          "pg_isready",
+          "-d",
+          "${POSTGRES_DB}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    volumes:
+      - infrastructure.postgres.data:/var/lib/postgresql
+
+#volumes
+volumes:
+  infrastructure.postgres.data:
+    name: "infrastructure.postgres.data"
+
+#network settings
+networks:
+  platform.internal.network:
+    name: platform.internal.network
+    driver: bridge
+    external: false
+  platform.web.network:
+    name: platform.web.network
+    external: true
+
+#secret keys
+secrets:
+  postgres_dev_password:
+    file: secrets/postgres/dev/db_password

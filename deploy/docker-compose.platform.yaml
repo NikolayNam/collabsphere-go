@@ -1,0 +1,50 @@
+services:
+  colabsphere-platform:
+    profiles: [ "api.local", "api.cloud" ]
+    image: colabsphere-platform:latest
+    restart: unless-stopped
+    build:
+      context: ../platform                  # parent directory (collabsphere-go)
+      dockerfile: ../platform/Dockerfile    # path to your Dockerfile relative to context
+    env_file:
+      - .env
+    volumes:
+      - platform.vol.shared:/platform/shared
+    secrets:
+      - postgres_dev_password
+      - postgres_neon_password
+    networks:
+      - platform.internal.network
+      - platform.web.network
+    ports:
+      - "${APPLICATION_PORT}:${APPLICATION_PORT}"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSL http://localhost:8080/docs"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  platform.internal.network:
+    name: platform.internal.network
+    driver: bridge
+    external: false
+  platform.web.network:
+    name: platform.web.network
+    external: true
+
+secrets:
+  postgres_dev_password:
+    file: secrets/postgres/dev/db_password
+  postgres_neon_password:
+    file: secrets/postgres/prod/db_password
+
+volumes:
+  platform.vol.shared:
+    name: "platform.vol.shared"
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ../platform/migrations
