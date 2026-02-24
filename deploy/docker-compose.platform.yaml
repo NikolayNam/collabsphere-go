@@ -1,21 +1,21 @@
+name: collabsphere
+
 services:
-  colabsphere-platform:
-    profiles: [ "api.local", "api.cloud" ]
-    image: colabsphere-platform:latest
+  go:
+    profiles: [ "local", "prod" ]
+    image: colabsphere-go:${IMAGE_TAG}
     restart: unless-stopped
     build:
       context: ../platform                  # parent directory (collabsphere-go)
       dockerfile: ../platform/Dockerfile    # path to your Dockerfile relative to context
     env_file:
       - .env
-    volumes:
-      - platform.vol.shared:/platform/shared
     secrets:
-      - postgres_dev_password
-      - postgres_neon_password
+      - dev_password
+      - neon_password
     networks:
-      - platform.internal.network
-      - platform.web.network
+      - internal.network
+      - web.network
     ports:
       - "${APPLICATION_PORT}:${APPLICATION_PORT}"
     healthcheck:
@@ -24,27 +24,22 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    command: ["/api"]
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 networks:
-  platform.internal.network:
-    name: platform.internal.network
+  internal.network:
+    name: internal.network
     driver: bridge
     external: false
-  platform.web.network:
-    name: platform.web.network
+  web.network:
+    name: web.network
     external: true
 
 secrets:
-  postgres_dev_password:
+  dev_password:
     file: secrets/postgres/dev/db_password
-  postgres_neon_password:
+  neon_password:
     file: secrets/postgres/prod/db_password
-
-volumes:
-  platform.vol.shared:
-    name: "platform.vol.shared"
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ../platform/migrations

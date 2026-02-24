@@ -3,28 +3,28 @@ package main
 import (
 	"log"
 
-	"github.com/NikolayNam/collabsphere-go/cmd/app"
-	"github.com/NikolayNam/collabsphere-go/cmd/httpserver"
+	configs "github.com/NikolayNam/collabsphere-go/internal/platform/config"
 
-	"github.com/NikolayNam/collabsphere-go/internal/config"
+	boot "github.com/NikolayNam/collabsphere-go/internal/bootstrap"
+	srv "github.com/NikolayNam/collabsphere-go/internal/platform/httpserver"
 )
 
 func main() {
 	// 1) config (env + secrets + TZ)
-	conf := config.New()
+	conf := configs.New()
 
-	// 2) build app (router + huma + module registration)
-	application := app.New(conf)
+	// 2) build bootstrap (router + huma + module registration)
+	application := boot.New(conf)
 
-	// 3) run http server (timeouts + graceful shutdown)
-	if err := httpserver.Run(application.Router, conf.APP.Address,
-		httpserver.Options{
+	// 3) run http httpserver (timeouts + graceful shutdown)
+	if err := srv.Run(application.Router, conf.APP.Address,
+		srv.Options{
 			ReadTimeout:       conf.APP.TimeoutRead,
 			WriteTimeout:      conf.APP.TimeoutWrite,
 			IdleTimeout:       conf.APP.TimeoutIdle,
-			ReadHeaderTimeout: 5, // seconds; либо тоже вынеси в конфиг
-			ShutdownTimeout:   5, // seconds; либо тоже вынеси в конфиг
+			ReadHeaderTimeout: 5, // seconds
+			ShutdownTimeout:   5, // seconds
 		}); err != nil {
-		log.Fatalf("server failed: %v", err)
+		log.Fatalf("httpserver failed: %v", err)
 	}
 }

@@ -11,8 +11,10 @@ COPY . .
 RUN go vet -v ./...
 RUN go test -v ./...
 
-# Компилируем бинарник и сохраняем в /platform/platform
-RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o ./platform ./cmd/api
+# Build binaries
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /out/api ./cmd/api
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /out/migrate ./cmd/migrate
+
 
 # Stage 2: Final image
 FROM debian:bookworm-slim
@@ -20,6 +22,7 @@ FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y
 
 # Копируем только бинарник из предыдущего этапа
-COPY --from=builder /platform/platform /app
+COPY --from=builder /out/api /api
+COPY --from=builder /out/migrate /migrate
+
 USER 65532:65532
-CMD ["/app"]

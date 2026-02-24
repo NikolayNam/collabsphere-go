@@ -1,49 +1,44 @@
+name: collabsphere
+
 services:
-  infrastructure-postgres:
-    profiles: [ "api.local" ]
+  postgres:
+    profiles: [ "local" ]
     image: postgres:18.2-bookworm
     restart: unless-stopped
     hostname: "${POSTGRES_HOST}"
     networks:
-      - platform.internal.network
+      - internal.network
     env_file:
       - .env
     secrets:
-      - postgres_dev_password
+      - dev_password
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "-u",
-          "${POSTGRES_USER}",
-          "pg_isready",
-          "-d",
-          "${POSTGRES_DB}",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "pg_isready -U postgres -d collabsphere"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
     ports:
       - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     volumes:
-      - infrastructure.postgres.data:/var/lib/postgresql
+      - postgres.data:/var/lib/postgresql
+
 
 #volumes
 volumes:
-  infrastructure.postgres.data:
-    name: "infrastructure.postgres.data"
+  postgres.data:
+    name: "postgres.data"
 
 #network settings
 networks:
-  platform.internal.network:
-    name: platform.internal.network
+  internal.network:
+    name: internal.network
     driver: bridge
     external: false
-  platform.web.network:
-    name: platform.web.network
+  web.network:
+    name: web.network
     external: true
 
 #secret keys
 secrets:
-  postgres_dev_password:
+  dev_password:
     file: secrets/postgres/dev/db_password
